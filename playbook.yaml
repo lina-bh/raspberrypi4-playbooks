@@ -1,0 +1,117 @@
+# %wheel ALL=(ALL:ALL) NOPASSWD: ALL
+- name: setup
+  hosts: myhosts
+  tasks:
+  - name: Disable hardware clock
+    ansible.builtin.service:
+      name: hwclock
+      enabled: false
+      runlevel: boot
+    become: true
+  - name: Enable software clock
+    ansible.builtin.service:
+      name: swclock
+      enabled: true
+      runlevel: boot
+    become: true
+  - name: Disable acpid
+    ansible.builtin.service:
+      name: acpid
+      enabled: false
+    become: true
+  - name: Setup repositories
+    ansible.builtin.copy:
+      src: ./repositories
+      dest: /etc/apk/repositories
+      owner: root
+      group: root
+      mode: 0644
+    become: true
+  - name: Install packages
+    ansible.builtin.package:
+      name:
+        - alsa-utils
+        - bluez
+        - elogind
+        - git
+        - htop
+        - kodi-gbm
+        - kodi-inputstream-adaptive
+        - less
+        - libarchive-tools
+        - libretro-pcsx-rearmed
+        - lm_sensors
+        - mesa-dri-gallium
+        - mksh
+        - networkmanager
+        - networkmanager-tui
+        - networkmanager-cli
+        - networkmanager-wifi
+        - nftables
+        - polkit-elogind
+        - qbittorrent-nox
+        - raspberrypi
+        - retroarch
+        - rsync
+        - sudo
+        - tailscale
+        - tmux
+        - udisks2
+        - util-linux-login
+      state: present
+    become: true
+  - name: Setup eudev
+    ansible.builtin.command: setup-devd udev
+    become: true
+  - name: Video acceleration permissions
+    ansible.builtin.copy:
+      content: 'SUBSYSTEM=="dma_heap", GROUP="video", MODE="0660"'
+      dest: /etc/udev/rules.d/98-dma-heap.rules
+      owner: root
+      group: root
+      mode: 0644
+    become: true
+  - name: Enable wpa_supplicant in NetworkManager
+    community.general.ini_file:
+      path: /etc/NetworkManager/NetworkManager.conf
+      create: false
+      section: device
+      option: wifi.backend
+      value: wpa_supplicant
+    become: true
+  - name: Set ifupdown.managed=true in NetworkManager
+    community.general.ini_file:
+      path: /etc/NetworkManager/NetworkManager.conf
+      create: false
+      section: ifupdown
+      option: managed
+      value: "true"
+    become: true
+  - name: Enable bluetooth
+    ansible.builtin.service:
+      name: bluetooth
+      enabled: true
+      state: started
+    become: true
+  - name: Set audio to max on boot
+    ansible.builtin.copy:
+      content: |
+        \#!/bin/sh
+        exec amixer sset PCM 100% > /dev/null
+      dest: /etc/local.d/volume.start
+      owner: root
+      group: root
+      mode: 0744
+    become: true
+  - name: Write bootloader config
+    ansible.builtin.copy:
+      src: ./usercfg.txt
+      dest: /boot/usercfg.txt
+    become: true
+      
+      
+  
+
+#busybox-mdev-openrc
+#nmcli connection add wifi ssid Glide mode infrastructure
+#tv config

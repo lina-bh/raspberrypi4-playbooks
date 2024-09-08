@@ -1,0 +1,6 @@
+dtparam=audio=on
+dtoverlay=vc4-kms-v3d,composite
+enable_tvout=1
+disable_overscan=1
+arm_boost=1
+disable_splash=1
