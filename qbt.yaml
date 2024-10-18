@@ -1,0 +1,33 @@
+---
+- name: qBittorrent container
+  hosts: rpi4
+  remote_user: lina
+  tasks:
+    - name: qBittorrent config directory
+      file:
+        path: "/var/lib/qbittorrent"
+        state: directory
+        owner: 65534
+        group: 65534
+        mode: "0755"
+      become: true
+    - name: qBittorrent container
+      community.docker.docker_container:
+        name: qbittorrent
+        image: lscr.io/linuxserver/qbittorrent:5.0.0
+        image_name_mismatch: recreate
+        restart_policy: unless-stopped
+        env:
+          WEBUI_PORT: "8081"
+          PUID: "65534"
+          PGID: "65534"
+        published_ports:
+          - "8081:8081"
+        volumes:
+          - "/var/lib/qbittorrent:/config"
+        mounts:
+          - source: /srv/downloads
+            target: /downloads
+            type: bind
+        networks:
+          - name: torrent
