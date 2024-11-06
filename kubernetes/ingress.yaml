@@ -1,0 +1,97 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: qbt
+spec:
+  stripPrefix:
+    prefixes:
+      - /qbt/
+      - /q/
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: jellyfin
+spec:
+  stripPrefix:
+    prefixes:
+      - /jellyfin/
+      - /j/
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: add-trailing-slash
+spec:
+  redirectRegex:
+    regex: "(https?://[^/]+/[a-z0-9_]+)$$"
+    replacement: "${1}/"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: parr
+spec:
+  replacePathRegex:
+    regex: ^/p/(.*)
+    replacement: /parr/$1
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sarr
+spec:
+  replacePathRegex:
+    regex: ^/s/(.*)
+    replacement: /sarr/$1
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: http
+spec:
+  entryPoints: [web, websecure]
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/jellyfin`) || PathPrefix(`/j/`)
+      services:
+        - name: jellyfin
+          port: 8096
+      middlewares:
+        - name: add-trailing-slash
+        - name: jellyfin
+    - kind: Rule
+      match: PathPrefix(`/qbt`) || PathPrefix(`/q/`)
+      services:
+        - name: qbt
+          port: 8081
+      middlewares:
+        - name: add-trailing-slash
+        - name: qbt
+    - kind: Rule
+      match: PathPrefix(`/parr`) || PathPrefix(`/p/`)
+      services:
+        - name: parr
+          port: 9696
+      middlewares:
+        - name: add-trailing-slash
+        - name: parr
+    - kind: Rule
+      match: PathPrefix(`/sarr`) || PathPrefix(`/s/`)
+      services:
+        - name: sarr
+          port: 8989
+      middlewares:
+        - name: add-trailing-slash
+        - name: sarr
+    - kind: Rule
+      match: PathPrefix(`/z/`)
+      services:
+        - name: zarr
+          port: 6767
+      middlewares:
+        - name: add-trailing-slash
+  tls:
+    certResolver: tailscale
+    domains:
+      - main: rpi4.lamancha-alhena.ts.net

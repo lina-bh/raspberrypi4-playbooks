@@ -1,0 +1,35 @@
+- name: Flood torrent frontend
+  hosts: rpi4
+  become: true
+  vars:
+    flood_img: jesec/flood:4.8.4
+  tasks:
+    - name: Pull Flood image
+      containers.podman.podman_image:
+        name: docker.io/{{ flood_img }}
+    - name: Create Flood data volume
+      containers.podman.podman_volume:
+        name: flood-data
+    - name: Create Flood container
+      containers.podman.podman_container:
+        name: flood
+        image: "{{ flood_img }}"
+        env:
+          HOME: /config
+        volumes:
+          - "flood-data:/config"
+          - "/srv/downloads:/downloads:ro,rslave"
+        network: services
+        publish:
+          - "127.0.0.1:3000:3000"
+        state: created
+        rm: true
+        generate_systemd:
+          path: /etc/systemd/system
+          new: true
+    - name: Enable Flood container
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        name: container-flood.service
+        enabled: true
+        state: started

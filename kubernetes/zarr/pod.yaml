@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zarr
+spec:
+  ports:
+    - port: 6767
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zarr
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: zarr
+        - name: movies
+          emptyDir: {}
+        - name: tv
+          hostPath:
+            path: /srv/downloads/TV
+            type: Directory
+      containers:
+        - image: lscr.io/linuxserver/bazarr:1.4.5
+          name: zarr
+          env:
+            - name: PUID
+              value: "65534"
+            - name: PGID
+              value: "65534"
+            - name: UMASK
+              value: "000"
+          ports:
+            - containerPort: 6767
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: tv
+              mountPath: /srv/downloads/tv

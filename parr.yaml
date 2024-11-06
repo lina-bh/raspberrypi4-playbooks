@@ -1,0 +1,22 @@
+---
+- name: Prowlarr search engine
+  hosts: rpi4
+  become: true
+  tasks:
+    - name: Copy prowlarr kube
+      ansible.builtin.copy:
+        src: ./kubes/parr.yaml
+        dest: ~root/kubes/parr.yaml
+    - name: Create prowlarr quadlet
+      containers.podman.podman_play:
+        state: quadlet
+        quadlet_filename: kube-parr
+        kube_file: ~root/kubes/parr.yaml
+        quadlet_options:
+          - PublishPort=9696:9696
+    - name: Enable prowlarr quadlet
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        name: kube-parr.service
+        enabled: true
+        state: restarted

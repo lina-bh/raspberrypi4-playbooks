@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbt
+spec:
+  ports:
+    - port: 8081
+      protocol: TCP

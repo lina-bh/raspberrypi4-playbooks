@@ -1,0 +1,24 @@
+- name: Install the newest Go
+  hosts: rpi4
+  become: true
+  tasks:
+    - name: Add go to the path
+      ansible.builtin.copy:
+        dest: /etc/profile.d/go.sh
+        content: |
+          PATH="/usr/local/go/bin:$PATH"
+          export PATH
+    - name: Get latest Go version
+      ansible.builtin.uri:
+        url: https://go.dev/VERSION?m=text
+        return_content: yes
+      register: version
+    - name: Uninstall previous Go
+      ansible.builtin.file:
+        path: /usr/local/go
+        state: absent
+    - name: Unpack Go tarball
+      ansible.builtin.unarchive:
+        src: "https://go.dev/dl/{{ version.content[:version.content.find('\n')]  }}.linux-arm64.tar.gz"
+        remote_src: true
+        dest: /usr/local/

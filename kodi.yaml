@@ -1,0 +1,17 @@
+---
+- name: Kodi setup
+  hosts: rpi4
+  become: true
+  tasks:
+    - name: Copy kodi.service
+      ansible.builtin.copy:
+        src: ./kodi.service
+        dest: /etc/systemd/system/kodi.service
+        owner: root
+        group: root
+        mode: "0644"
+    - name: Enable kodi.service
+      ansible.builtin.systemd_service:
+        name: kodi.service
+        daemon_reload: true
+        enabled: true

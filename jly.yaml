@@ -1,0 +1,42 @@
+---
+- name: Jellyfin media server
+  hosts: rpi4
+  become: true
+  vars:
+    jellyfin_image: lscr.io/linuxserver/jellyfin:10.10.1
+  tasks:
+    - name: Create Jellyfin data volume
+      containers.podman.podman_volume:
+        name: jly-lscr
+    - name: Pull Jellyfin image
+      containers.podman.podman_image:
+        name: "{{ jellyfin_image }}"
+    - name: Create Jellyfin container
+      containers.podman.podman_container:
+        name: jly
+        image: "{{ jellyfin_image }}"
+        hostname: rpi4
+        env:
+          PUID: "65534"
+          PGID: "65534"
+          JELLYFIN_PublishedServerUrl: "https://rpi4.lamancha-alhena.ts.net/j/"
+        volumes:
+          - "jly-lscr:/config"
+          - "/srv/downloads:/srv/downloads"
+        mount:
+          - "type=tmpfs,dst=/config/cache"
+          - "type=tmpfs,dst=/config/log"
+        publish:
+          - "8096:8096"
+        device: ["/dev/video10:/dev/video10:rw", "/dev/video11:/dev/video11:rw", "/dev/video12:/dev/video12:rw", "/dev/video18:/dev/video18:rw", "/dev/video31:/dev/video31:rw", "/dev/media3:/dev/media3:rw", "/dev/video13:/dev/video13:rw", "/dev/video14:/dev/video14:rw", "/dev/video15:/dev/video15:rw", "/dev/video16:/dev/video16:rw", "/dev/video20:/dev/video20:rw", "/dev/video21:/dev/video21:rw", "/dev/video22:/dev/video22:rw", "/dev/video23:/dev/video23:rw", "/dev/media1:/dev/media1:rw", "/dev/media2:/dev/media2:rw", "/dev/video19:/dev/video19:rw", "/dev/media0:/dev/media0:rw"]
+        state: quadlet
+        quadlet_filename: container-jly
+        quadlet_options:
+          - "[Install]"
+          - "WantedBy=multi-user.target"
+    - name: Enable jellyfin service
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        name: container-jly.service
+        enabled: true
+        state: restarted

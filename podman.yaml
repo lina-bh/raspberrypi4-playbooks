@@ -1,0 +1,67 @@
+---
+- name: Install podman
+  hosts: rpi4
+  vars:
+    build_root: /home/lina
+    podman_tag: 5.2.5
+  tasks:
+    - name: Build podman
+      block:
+        - name: Check for podman
+          ansible.builtin.command: "podman --version"
+          register: result
+          changed_when: false
+          failed_when: "not (result.rc == 0 and result.stdout.endswith('5.2.5'))"
+      rescue:
+        - name: Pull podman from github
+          ansible.builtin.git:
+            repo: "https://github.com/containers/podman.git"
+            dest: "{{ build_root }}/podman"
+            version: "v{{ podman_tag }}"
+            single_branch: true
+        - name: Install podman build dependencies
+          ansible.builtin.apt:
+            name:
+              - catatonit
+              - conmon
+              - git
+              - iptables
+              - libapparmor-dev
+              - libassuan-dev
+              - libc6-dev
+              - libglib2.0-dev
+              - libgpgme-dev
+              - libgpg-error-dev
+              - libprotobuf-dev
+              - libprotobuf-c-dev
+              - libseccomp-dev
+              - libsystemd-dev
+              - make
+              - netavark
+              - pkgconf
+              - uidmap
+            become: true
+        - name: Build podman
+          community.general.make:
+            chdir: "{{ build_root }}/podman"
+            jobs: 2
+            params:
+              BUILDTAGS: apparmor exclude_graphdriver_btrfs exclude_graphdriver_devicemapper seccomp systemd
+        - name: Install podman
+          community.general.make:
+            chdir: "{{ build_root }}/podman"
+            target: install
+            become: true
+    - name: Pull policy
+      become: true
+      ansible.builtin.copy:
+        content: '{"default":[{"type":"insecureAcceptAnything"}],"transports":{"docker-daemon":{"":[{"type":"insecureAcceptAnything"}]}}}'
+        dest: /etc/containers/policy.json
+    - name: Create services network
+      become: true
+      containers.podman.podman_network:
+        name: services
+        recreate: true
+
+# sudo wget -O/usr/local/bin/crun https://github.com/containers/crun/releases/download/1.18.2/crun-1.18.2-linux-arm64
+# chmod a+x /usr/local/bin/crun

@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - name: config
+          hostPath:
+            path: /var/lib/jellyfin
+            type: Directory
+        - name: cache
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: media
+          hostPath:
+            path: /srv/downloads
+            type: Directory
+        - name: video11
+          hostPath:
+            path: /dev/video11
+            type: CharDevice
+        # - name: video1
+        #   hostPath:
+        #     path: /dev/v4l/by-path/platform-bcm2835-isp-video-index1
+        #     type: CharDevice
+        # - name: video2
+        #   hostPath:
+        #     path: /dev/v4l/by-path/platform-bcm2835-isp-video-index2
+        #     type: CharDevice
+        # - name: video3
+        #   hostPath:
+        #     path: /dev/v4l/by-path/platform-bcm2835-isp-video-index3
+        #     type: CharDevice
+      containers:
+        - name: jellyfin
+          image: docker.io/jellyfin/jellyfin:10.9.11
+          ports:
+            - containerPort: 8096
+          volumeMounts:
+            - name: config
+              mountPath: "/config"
+            - name: cache
+              mountPath: "/cache"
+            - name: media
+              mountPath: "/srv/downloads"
+              readOnly: true
+            - name: video11
+              mountPath: "/dev/video11"
+            # - name: video1
+            #   mountPath: "/dev/video2"
+            # - name: video2
+            #   mountPath: "/dev/video3"
+            # - name: video3
+            #   mountPath: "/dev/video4"
+          env:
+            - name: JELLYFIN_PublishedServerUrl
+              value: "https://rpi4.lamancha-alhena.ts.net/jellyfin/"
+          resources:
+            limits:
+              cpu: 1.0
+          securityContext:
+            privileged: true
+          # livenessProbe:
+          #   failureThreshold: 6
+          #   httpGet:
+          #     path: /health
+          #     port: 8096
+      securityContext:
+        appArmorProfile:
+          type: Unconfined
+        runAsNonRoot: false
+        runAsUser: 0
+        runAsGroup: 0
+        # supplementalGroups: [44]

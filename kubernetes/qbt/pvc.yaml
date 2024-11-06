@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: qbt
+spec:
+  storageClassName: ""
+  accessModes: [ReadWriteOncePod]
+  hostPath:
+    path: "/var/lib/qbittorrent"
+  capacity:
+    storage: 16Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbt
+spec:
+  storageClassName: ""
+  volumeName: qbt
+  accessModes: [ReadWriteOncePod]
+  resources:
+    requests:
+      storage: 16Mi

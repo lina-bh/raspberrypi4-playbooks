@@ -1,0 +1,117 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tailscale
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tailscale
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - secrets
+    verbs:
+      - create
+  - apiGroups:
+      - ''
+    resourceNames: []
+    resources:
+      - secrets
+    verbs:
+      - get
+      - update
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tailscale
+subjects:
+  - kind: ServiceAccount
+    name: tailscale
+roleRef:
+  kind: Role
+  name: tailscale
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbt-ts
+spec:
+  accessModes:
+    - ReadWriteOncePod
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 16Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tailscale
+  name: tailscale
+spec:
+  ports:
+    - name: '1080'
+      port: 1080
+      protocol: TCP
+      targetPort: 1080
+  selector:
+    app: tailscale
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tailscale
+  name: tailscale
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tailscale
+  template:
+    metadata:
+      labels:
+        app: tailscale
+    spec:
+      serviceAccountName: tailscale
+      volumes:
+        - name: tailscale
+          persistentVolumeClaim:
+            claimName: qbt-ts
+      containers:
+        - name: tailscale
+          imagePullPolicy: Always
+          image: ghcr.io/tailscale/tailscale:latest
+          env:
+            - name: TS_AUTHKEY
+              value: ""
+            - name: TS_SOCKS5_SERVER
+              value: 0.0.0.0:1080
+            - name: TS_AUTH_ONCE
+              value: '1'
+            - name: TS_STATE_DIR
+              value: /var/lib/tailscale
+          volumeMounts:
+            - name: tailscale
+              mountPath: /var/lib/tailscale
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          resources:
+            limits:
+              cpu: 1.0
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - sleep 1 && tailscale set --exit-node=gb-lon-wg-003.mullvad.ts.net
