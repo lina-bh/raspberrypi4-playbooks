@@ -25,7 +25,7 @@ spec:
         - name: jackett-run
           emptyDir: {}
       containers:
-        - image: lscr.io/linuxserver/jackett:0.22.885
+        - image: lscr.io/linuxserver/jackett:0.22.902
           name: jett
           ports:
             - containerPort: 9117

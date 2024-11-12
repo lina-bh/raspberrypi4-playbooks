@@ -61,7 +61,31 @@
       become: true
       containers.podman.podman_network:
         name: services
-        recreate: true
+    - name: Install TCP listener service
+      become: true
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/podman-tcp.service
+        content: |
+          [Unit]
+          Description=Podman tcp
+          StartLimitIntervalSec=0
+
+          [Service]
+          Delegate=true
+          Type=exec
+          KillMode=process
+          Environment=LOGGING=\"--log-level=info\"
+          ExecStart=/usr/local/bin/podman $LOGGING system service -t 0 tcp://rpi4.lamancha-alhena.ts.net:2375
+
+          [Install]
+          WantedBy=default.target
+    - name: Enable TCP listener service
+      become: true
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        name: podman-tcp.service
+        enabled: true
+        state: started
 
 # sudo wget -O/usr/local/bin/crun https://github.com/containers/crun/releases/download/1.18.2/crun-1.18.2-linux-arm64
 # chmod a+x /usr/local/bin/crun
