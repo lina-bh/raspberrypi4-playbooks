@@ -1,0 +1,21 @@
+---
+- name: Flood and rtorrent
+  hosts: rpi4
+  become: true
+  tasks:
+    - name: rtorrent pod
+      containers.podman.podman_pod:
+        name: rtorrent
+        state: quadlet
+        quadlet_filename: rtorrent-pod
+        network: services
+        volume:
+          - "/srv/downloads:/srv/downloads:noexec"
+    - name: rtorrent img path
+      command:
+        cmd: nix
+
+    - name: rtorrent container
+      containers.podman.podman_container:
+        name: rtorrent
+        image: docker.io/jesec/rtorrent

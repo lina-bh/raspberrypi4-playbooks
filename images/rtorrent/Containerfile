@@ -1,0 +1,5 @@
+FROM docker.io/nixos/nix AS build
+
+COPY rtorrent.nix /
+
+RUN nix build 
