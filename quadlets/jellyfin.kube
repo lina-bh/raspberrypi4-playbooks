@@ -1,0 +1,5 @@
+[Kube]
+Yaml=./jellyfin/deploy.yaml
+ConfigMap=./jellyfin/funnel.yaml
+Network=private
+AutoUpdate=registry

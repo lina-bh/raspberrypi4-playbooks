@@ -1,0 +1,14 @@
+- name: Sync quadlets
+  hosts: rpi4
+  become: true
+  tasks:
+    - name: Sync
+      ansible.posix.synchronize:
+        src: ../quadlets/
+        dest: /etc/containers/systemd
+        delete: true
+    - name: Reload systemd
+      systemd_service:
+        daemon_reload: true
+
+        

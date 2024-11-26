@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: transmission
+spec:
+  volumes:
+    - name: tailscale
+      persistentVolumeClaim:
+        claimName: transmission-tailscale
+    - name: serve
+      configMap:
+        name: transmission-serve
+        items:
+          - key: serve.json
+            path: serve.json
+    - name: tun
+      hostPath:
+        path: /dev/net/tun
+        type: CharDevice
+    - name: transmission
+      persistentVolumeClaim:
+        claimName: transmission
+    - name: downloads
+      hostPath:
+        path: /srv/downloads
+  containers:
+    - name: transmission
+      image: lscr.io/linuxserver/transmission:latest
+      volumeMounts:
+        - name: transmission
+          mountPath: /config
+        - name: downloads
+          mountPath: /downloads
+    - name: upgrade
+      image: ghcr.io/lina-bh/upgrade:latest
+      args: ["/upgrade", ":8080"]
+    - name: tailscale
+      image: docker.io/tailscale/tailscale:latest
+      securityContext:
+        capabilities:
+          add:
+            - NET_RAW
+            - NET_ADMIN
+            - SYS_MODULE
+      volumeMounts:
+        - name: tun
+          mountPath: /dev/net/tun
+        - name: tailscale
+          mountPath: /var/lib/tailscale
+        - name: serve
+          mountPath: /config
+      env:
+        - name: TS_AUTH_ONCE
+          value: "0"
+        - name: TS_HOSTNAME
+          value: transmission
+        - name: TS_SERVE_CONFIG
+          value: /config/serve.json
+        - name: TS_STATE_DIR
+          value: /var/lib/tailscale
+        - name: TS_USERSPACE
+          value: "0"

@@ -1,9 +1,0 @@
-labels:
-  - pairs:
-      app: parr
-      role: illegal
-    includeSelectors: true
-resources:
-  - svc.yaml
-  - pvc.yaml
-  - pod.yaml
