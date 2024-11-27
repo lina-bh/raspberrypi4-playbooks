@@ -1,3 +1,4 @@
+- import_playbook: ./volumes.yaml
 - name: Sync quadlets
   hosts: rpi4
   become: true
