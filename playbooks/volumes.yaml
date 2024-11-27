@@ -22,9 +22,10 @@
         options:
           - device=tmpfs
           - type=tmpfs
-    - name: Transmission
+    - name: Transmission resume
       podman_volume:
-        name: transmission
+        name: transmission-resume
+        options: ["o=uid=911,gid=911"]
     - name: Transmission Tailscale
       podman_volume:
         name: transmission-tailscale

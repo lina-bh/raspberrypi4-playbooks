@@ -18,8 +18,14 @@ spec:
         path: /dev/net/tun
         type: CharDevice
     - name: transmission
+      configMap:
+        name: transmission-config
+        items:
+          - key: settings.json
+            path: settings.json
+    - name: resume
       persistentVolumeClaim:
-        claimName: transmission
+        claimName: transmission-resume
     - name: downloads
       hostPath:
         path: /srv/downloads
@@ -31,6 +37,10 @@ spec:
           mountPath: /config
         - name: downloads
           mountPath: /downloads
+        - name: resume
+          mountPath: /config/resume
+        - name: resume
+          mountPath: /config/torrents
     - name: upgrade
       image: ghcr.io/lina-bh/upgrade:latest
       args: ["/upgrade", ":8080"]
@@ -41,7 +51,6 @@ spec:
           add:
             - NET_RAW
             - NET_ADMIN
-            - SYS_MODULE
       volumeMounts:
         - name: tun
           mountPath: /dev/net/tun

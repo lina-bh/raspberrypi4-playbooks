@@ -1,5 +1,6 @@
 [Kube]
 Yaml=./transmission/deploy.yaml
 ConfigMap=./transmission/serve.yaml
+ConfigMap=./transmission/config.yaml
 Network=private
 AutoUpdate=registry
