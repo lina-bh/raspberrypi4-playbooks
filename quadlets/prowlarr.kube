@@ -1,0 +1,5 @@
+[Kube]
+Yaml=./prowlarr/deploy.yaml
+ConfigMap=./prowlarr/serve.yaml
+Network=private
+AutoUpdate=registry

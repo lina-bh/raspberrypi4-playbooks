@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prowlarr
+spec:
+  dnsConfig:
+    nameservers:
+      - 100.100.100.100
+      - 1.1.1.1  # tailscale#4677
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: prowlarr
+    - name: tailscale
+      persistentVolumeClaim:
+        claimName: prowlarr-tailscale
+    - name: serve
+      configMap:
+        name: prowlarr-serve
+        items:
+          - key: serve.json
+            path: serve.json
+    - name: tun
+      hostPath:
+        path: /dev/net/tun
+        type: CharDevice
+  containers:
+    - name: app
+      image: ghcr.io/hotio/prowlarr:latest
+      volumeMounts:
+        - name: data
+          mountPath: /config
+    - name: flaresolverr
+      image: ghcr.io/flaresolverr/flaresolverr:latest
+    - name: ts
+      image: docker.io/tailscale/tailscale:latest
+      securityContext:
+        capabilities:
+          add:
+            - NET_ADMIN
+            - NET_RAW
+      volumeMounts:
+        - name: tailscale
+          mountPath: /var/lib/tailscale
+        - name: serve
+          mountPath: /serve
+        - name: tun
+          mountPath: /dev/net/tun
+      env:
+        - name: TS_ACCEPT_DNS
+          value: "1"
+        - name: TS_AUTH_ONCE
+          value: "0"
+        - name: TS_HOSTNAME
+          value: prowlarr
+        - name: TS_SERVE_CONFIG
+          value: /serve/serve.json
+        - name: TS_STATE_DIR
+          value: /var/lib/tailscale
+        - name: TS_USERSPACE
+          value: "1"
+        - name: TS_OUTBOUND_HTTP_PROXY_LISTEN
+          value: "localhost:8080"
+        - name: TS_SOCKS5_SERVER
+          value: "localhost:1080"
+        - name: TS_EXTRA_ARGS
+          value: --exit-node=100.68.61.55
+        - name: TS_TAILSCALED_EXTRA_ARGS
+          value: --no-logs-no-support
+        - name: TS_AUTHKEY
+          valueFrom:
+            secretKeyRef:
+              name: tailscale
+              key: TS_AUTHKEY
+              optional: true
