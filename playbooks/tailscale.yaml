@@ -1,7 +1,5 @@
 - name: Tailscale podman secret
   hosts: rpi4
-  vars:
-    authkey: FAKE
   collections:
     - containers.podman
   tasks:
