@@ -1,27 +1,30 @@
+---
 - name: Volumes
   hosts: rpi4
   become: true
   collections:
     - containers.podman
   tasks:
-    - name: Downloads
-      file:
-        path: /srv/downloads
-        owner: "1000"
-        group: "1000"
-        mode: "0777"
+    # - name: Downloads
+    #   file:
+    #     path: /srv/downloads
+    #     owner: "1000"
+    #     group: "1000"
+    #     mode: "0777"
     - name: Jellyfin
       podman_volume:
         name: jellyfin
     - name: Jellyfin Tailscale
       podman_volume:
         name: jellyfin-tailscale
-    - name: Jellyfin transcodes
-      podman_volume:
-        name: jellyfin-transcodes
-        options:
-          - device=tmpfs
-          - type=tmpfs
+    # - name: Jellyfin transcodes
+    #   when: false
+    #   podman_volume:
+    #     name: jellyfin-transcodes
+    #     options:
+    #       - device=tmpfs
+    #       - type=tmpfs
+    #       - o=size=1G
     - name: Transmission resume
       podman_volume:
         name: transmission-resume
@@ -29,3 +32,9 @@
     - name: Transmission Tailscale
       podman_volume:
         name: transmission-tailscale
+    - name: Prowlarr
+      podman_volume:
+        name: prowlarr
+    - name: Prowlarr Tailscale
+      podman_volume:
+        name: prowlarr-tailscale

@@ -9,7 +9,7 @@ spec:
         claimName: jellyfin
     - name: media
       hostPath:
-        path: /srv/downloads
+        path: /mnt/downloads
     - name: tailscale
       persistentVolumeClaim:
         claimName: jellyfin-tailscale

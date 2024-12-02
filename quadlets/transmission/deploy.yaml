@@ -1,8 +1,12 @@
+---
 apiVersion: v1
 kind: Pod
 metadata:
   name: transmission
 spec:
+  dnsConfig:
+    nameservers:
+      - 100.100.100.100
   volumes:
     - name: tailscale
       persistentVolumeClaim:
@@ -28,9 +32,9 @@ spec:
         claimName: transmission-resume
     - name: downloads
       hostPath:
-        path: /srv/downloads
+        path: /mnt/downloads
   containers:
-    - name: transmission
+    - name: app
       image: lscr.io/linuxserver/transmission:latest
       volumeMounts:
         - name: transmission
@@ -41,10 +45,7 @@ spec:
           mountPath: /config/resume
         - name: resume
           mountPath: /config/torrents
-    - name: upgrade
-      image: ghcr.io/lina-bh/upgrade:latest
-      args: ["/upgrade", ":8080"]
-    - name: tailscale
+    - name: ts
       image: docker.io/tailscale/tailscale:latest
       securityContext:
         capabilities:
@@ -59,6 +60,8 @@ spec:
         - name: serve
           mountPath: /config
       env:
+        - name: TS_ACCEPT_DNS
+          value: "1"
         - name: TS_AUTH_ONCE
           value: "0"
         - name: TS_HOSTNAME
@@ -69,3 +72,13 @@ spec:
           value: /var/lib/tailscale
         - name: TS_USERSPACE
           value: "0"
+        - name: TS_EXTRA_ARGS
+          value: --exit-node=100.67.33.82
+        - name: TS_TAILSCALED_EXTRA_ARGS
+          value: --no-logs-no-support
+        - name: TS_AUTHKEY
+          valueFrom:
+            secretKeyRef:
+              name: tailscale
+              key: TS_AUTHKEY
+              optional: true
